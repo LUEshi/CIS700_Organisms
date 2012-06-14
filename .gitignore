@@ -1,0 +1,10 @@
+*.class
+./bin
+./Images
+./src/organisms/ui
+./src/organisms/g0
+
+# Package Files #
+*.jar
+*.war
+*.ear
