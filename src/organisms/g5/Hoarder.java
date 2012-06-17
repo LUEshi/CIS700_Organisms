@@ -141,7 +141,12 @@ public final class Hoarder implements Player {
 			} else if ( foodpresent[WEST] ) {
 				currentDirection = WEST;
 			}
-			m = new Move(currentDirection);
+			// Move only every third turn
+			if ( age %3 == 0 ) {
+				m = new Move(currentDirection);
+			} else {
+				m = new Move(STAYPUT);
+			}
 		}
 
 		return m;
