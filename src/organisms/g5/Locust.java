@@ -122,7 +122,7 @@ public final class Locust implements Player {
 				currentDirection = WEST;
 			}
 			// Move only every third turn
-			if ( age %3 == 0 ) {
+			if ( age %1 == 0 ) {
 				m = new Move(currentDirection);
 			} else {
 				m = new Move(STAYPUT);

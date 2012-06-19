@@ -6,16 +6,19 @@ import java.awt.Color;
 
 import organisms.*;
 
-public final class Bacteria implements Player {
+public final class LocustFast implements Player {
 
-	static final String _CNAME = "Bacteria";
-	static final Color _CColor = new Color(0.0f, 1.00f, 0.33f);
+	static final String _CNAME = "Locust";
+	static final Color _CColor = new Color(0.5f, 0.50f, 0.5f);
 	private int state;
 	private Random rand;
 	private OrganismsGame game;
 	private int age;
 	private boolean isFarming = true;
+	private boolean isReproducing;
+	private int reproduceDirection;
 	private int farmDirection;
+	private int currentDirection;
 
 
 	/*
@@ -29,7 +32,10 @@ public final class Bacteria implements Player {
 		this.game = game;
 		this.age = 0;
 		this.isFarming = false;
+		this.isReproducing = false;
+		this.reproduceDirection = 1;
 		this.farmDirection = SOUTH;
+		this.currentDirection = key;
 	}
 
 	/*
@@ -72,20 +78,50 @@ public final class Bacteria implements Player {
 		this.age++;
 		Move m = null; // placeholder for return value
 
-		if ( this.age < 200 && !(foodleft>50) ) {
-			m = new Move(STAYPUT);
-		} else {
-			if ( neighbors[NORTH] == -1 ) {
-				m = new Move(REPRODUCE, NORTH, NORTH);
-			} else if ( neighbors[SOUTH] == -1 ) {
-				m = new Move(REPRODUCE, SOUTH, SOUTH);
-			} else if ( neighbors[EAST] == -1 ) {
-				m = new Move(REPRODUCE, EAST, EAST);
-			} else if ( neighbors[WEST] == -1 ) {
-				m = new Move(REPRODUCE, WEST, WEST);
-			} else {
-				m = new Move(STAYPUT);
+
+		// if energy less than movement cost, stay put unless food adjacent
+		if ( energyleft < this.game.v() ) {
+			this.isReproducing = false;
+			for ( int i = 1; i <= 4; i ++  ) {
+				if (foodpresent[i]) {
+					m = new Move(i);
+				}
 			}
+			m = new Move(STAYPUT);
+		}
+
+		
+		if ( this.isReproducing ) {
+			m = new Move(REPRODUCE, this.reproduceDirection, this.reproduceDirection);
+			this.reproduceDirection++;
+			if ( this.reproduceDirection > 4 ) {
+				this.reproduceDirection = 1;
+			}
+		}
+		
+		// if max energy, start reproducing like crazy
+		if ( energyleft >= this.game.M()*.90 ) {
+			this.isReproducing = true;
+		}
+
+		// if we are on food, don't move!
+		if ( foodleft > 0 && m == null ) {
+			m = new Move(STAYPUT);
+		}
+		
+		
+		if ( m == null ) {
+			// this player selects moves in the same direction, changing only when food is detected
+			if ( foodpresent[NORTH] ) {
+				currentDirection = NORTH;
+			} else if ( foodpresent[EAST] ) {
+				currentDirection = EAST;
+			} else if ( foodpresent[SOUTH] ) {
+				currentDirection = SOUTH;
+			} else if ( foodpresent[WEST] ) {
+				currentDirection = WEST;
+			}
+			m = new Move(currentDirection);
 		}
 
 		return m;
