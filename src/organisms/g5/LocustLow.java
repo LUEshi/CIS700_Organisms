@@ -149,10 +149,17 @@ public final class LocustLow implements Player {
 
 		
 		if ( this.isReproducing ) {
-			m = new Move(REPRODUCE, this.reproduceDirection, this.reproduceDirection);
-			this.reproduceDirection++;
-			if ( this.reproduceDirection > 4 ) {
-				this.reproduceDirection = 1;
+			// There has to be a point at which reproducing no longer makes sense.
+			// Some factor of the cost required to take a step
+			// Possibly combined with how much food we saw?
+			if ( energyleft <= this.game.v()*5 ) {
+				this.isReproducing = false;
+			} else {
+				m = new Move(REPRODUCE, this.reproduceDirection, this.reproduceDirection);
+				this.reproduceDirection++;
+				if ( this.reproduceDirection > 4 ) {
+					this.reproduceDirection = 1;
+				}
 			}
 		}
 		
