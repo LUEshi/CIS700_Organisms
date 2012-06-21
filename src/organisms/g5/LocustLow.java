@@ -19,6 +19,10 @@ public final class LocustLow implements Player {
 	private int reproduceDirection;
 	private int farmDirection;
 	private int currentDirection;
+	private List<Integer> foodSeen;
+	private int stepsCounted = 20;
+	private double reproducePct = 0.7;
+	boolean isGreedy;
 
 
 	/*
@@ -36,6 +40,8 @@ public final class LocustLow implements Player {
 		this.reproduceDirection = 1;
 		this.farmDirection = SOUTH;
 		this.currentDirection = key;
+		this.foodSeen = new ArrayList<Integer>();
+		this.isGreedy = false;
 	}
 
 	/*
@@ -59,6 +65,56 @@ public final class LocustLow implements Player {
 		return false;
 	}
 
+	
+	/*
+	 * update the amount of food we can see
+	 */
+	private void updateFoodSeen( boolean[] foodpresent, int foodleft ) {
+		int f = 0;
+		for ( int i = 0; i < foodpresent.length; i++ ) {
+			if ( foodpresent[i] ) {
+				f++;
+			}
+		}
+		if ( foodleft > 0 ) {
+			f++;
+		}
+		this.foodSeen.add(f);
+		while ( this.foodSeen.size() > this.stepsCounted ) {
+			this.foodSeen.remove(0);
+		}
+	}
+	
+	private double foodPerStep() {
+		double avg = 0.0;
+		Iterator<Integer> iter = this.foodSeen.iterator();
+		while ( iter.hasNext() ) {
+			int fs = iter.next();
+			avg += fs;
+		}
+		avg = avg / this.foodSeen.size();
+		return avg;
+	}
+	
+	private int turnRight() {
+		int c = currentDirection;
+		switch ( currentDirection ) {
+	        case NORTH:
+	        	c = EAST;
+	            break;
+	        case EAST:
+	        	c = SOUTH;
+	            break;
+	        case SOUTH:
+	        	c = WEST;
+	            break;
+	        case WEST:
+	        	c = NORTH;
+	            break;
+		}
+		return c;
+	}
+	
 	/*
 	 * This is the state to be displayed to other nearby organisms
 	 */
@@ -75,6 +131,7 @@ public final class LocustLow implements Player {
 	 */
 	public Move move(boolean[] foodpresent, int[] neighbors, int foodleft, int energyleft) throws Exception {
 		
+		updateFoodSeen(foodpresent,foodleft);
 		this.age++;
 		Move m = null; // placeholder for return value
 
@@ -83,7 +140,7 @@ public final class LocustLow implements Player {
 		if ( energyleft < this.game.v() ) {
 			this.isReproducing = false;
 			for ( int i = 1; i <= 4; i ++  ) {
-				if (foodpresent[i]) {
+				if (foodpresent[i] && neighbors[i] == -1) {
 					m = new Move(i);
 				}
 			}
@@ -100,29 +157,60 @@ public final class LocustLow implements Player {
 		}
 		
 		// if max energy, start reproducing like crazy
-		if ( energyleft >= this.game.M()*.70 ) {
+		if ( energyleft >= this.game.M()*reproducePct ) {
 			this.isReproducing = true;
 		}
 
 		// if we are on food, don't move!
 		if ( foodleft > 0 && m == null ) {
 			m = new Move(STAYPUT);
+			if ( this.isGreedy ) {
+				// Look for adjacent unoccupied food
+				for ( int i = 0; i < neighbors.length; i++ ) {
+					if ( neighbors[i] >= 0 && foodpresent[i] ) {
+						// Move to food?
+						m = new Move(i);
+						// Reproduce onto food?
+						//m = new Move(REPRODUCE, i, i);
+						break;
+					}
+				}
+			}
 		}
 		
 		
 		if ( m == null ) {
 			// this player selects moves in the same direction, changing only when food is detected
-			if ( foodpresent[NORTH] ) {
-				currentDirection = NORTH;
-			} else if ( foodpresent[EAST] ) {
+			/*
+			if ( foodpresent[EAST] && neighbors[EAST]==-1 ) {
 				currentDirection = EAST;
-			} else if ( foodpresent[SOUTH] ) {
+			} else if ( foodpresent[SOUTH] && neighbors[SOUTH]==-1 ) {
 				currentDirection = SOUTH;
-			} else if ( foodpresent[WEST] ) {
+			} else if ( foodpresent[WEST] && neighbors[WEST]==-1 ) {
 				currentDirection = WEST;
+			} else if ( foodpresent[NORTH] && neighbors[NORTH]==-1 ) {
+				currentDirection = NORTH;
 			}
-			// Move only every third turn
-			if ( age %1 == 0 ) {
+			*/
+			// Start checking in random direction. May make a difference?
+			int d = 1+rand.nextInt(4); // 1 to 4
+			for ( int i = d; i <= d+4; i++ ) {
+				int nesw = (i%4) + 1;
+				if ( foodpresent[nesw] && neighbors[nesw]==-1 ) {
+					currentDirection = nesw;
+				}
+			}
+			
+			int turnInterval = 1;
+			if ( age > this.stepsCounted && foodPerStep() < 0.05 ) {
+				//turnInterval = 10;
+				//this.isGreedy = true;
+				//this.reproducePct = 1.0;
+				//if ( neighbors[currentDirection] >= 0 ) {
+				//	currentDirection = turnRight();
+				//}
+			}
+			if ( age % turnInterval == 0 ) {
 				m = new Move(currentDirection);
 			} else {
 				m = new Move(STAYPUT);
