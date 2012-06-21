@@ -8,7 +8,7 @@ import organisms.*;
 
 public final class Bacteria implements Player {
 
-	static final String _CNAME = "Farmer";
+	static final String _CNAME = "Bacteria";
 	static final Color _CColor = new Color(0.0f, 1.00f, 0.33f);
 	private int state;
 	private Random rand;
