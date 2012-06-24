@@ -117,7 +117,7 @@ public final class Hoarder implements Player {
 		// - turns mod 100 = 0 (slows growth)
 		// - we have few immediate neighbors
 		// TODO no immediate neighbors can lead to situations where there is plenty of food on the board, but clusters of existing organisms cannot propagate
-		if ( this.isHoarding && age%100 == 0 && !isHungry(energyleft) && numNeighbors(neighbors)<2 ) {
+		if ( this.isHoarding && age%100 == 0 && !isHungry(energyleft) && numNeighbors(neighbors)<3 ) {
 			if ( neighbors[NORTH] == -1 ) {
 				m = new Move(REPRODUCE, NORTH, state);
 			} else if (neighbors[EAST] == -1) {
@@ -141,8 +141,8 @@ public final class Hoarder implements Player {
 			} else if ( foodpresent[WEST] ) {
 				currentDirection = WEST;
 			}
-			// Move only every third turn
-			if ( age %3 == 0 ) {
+			// Move only every-other turn
+			if ( age %2 == 0 ) {
 				m = new Move(currentDirection);
 			} else {
 				m = new Move(STAYPUT);
