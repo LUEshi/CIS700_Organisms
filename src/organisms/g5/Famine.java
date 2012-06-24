@@ -112,6 +112,7 @@ public final class Famine implements Player {
 	public Move move(boolean[] foodpresent, int[] neighbors, int foodleft, int energyleft) throws Exception {
 		this.age++;
 		updateFoodSeen(foodpresent,foodleft);
+		//this.game.println(" "+ foodPerStep());
 		Move m = null; // placeholder for return value
 		
 		
@@ -147,11 +148,11 @@ public final class Famine implements Player {
 		// Reproduce if:
 		// - We've seen more than 
 		// - We're hoarding
-		// - We're not hungry
+		// - We're not hungry (age%100 == 0)
 		// - turns mod 100 = 0 (slows growth)
 		// - we have few immediate neighbors
 		// TODO no immediate neighbors can lead to situations where there is plenty of food on the board, but clusters of existing organisms cannot propagate
-		if ( foodPerStep() > 1d/moveInterval && this.isHoarding && age%100 == 0 && !isHungry(energyleft) && numNeighbors(neighbors)<3 ) {
+		if ( foodPerStep() > 1d/moveInterval && this.isHoarding && !isHungry(energyleft) && numNeighbors(neighbors)<3 ) {
 			if ( neighbors[NORTH] == -1 ) {
 				m = new Move(REPRODUCE, NORTH, state);
 			} else if (neighbors[EAST] == -1) {
@@ -162,8 +163,6 @@ public final class Famine implements Player {
 				m = new Move(STAYPUT);
 			}
 		}
-		
-		this.game.println(" "+ foodPerStep());
 		
 
 		if ( m == null ) {
@@ -177,7 +176,7 @@ public final class Famine implements Player {
 			} else if ( foodpresent[WEST] ) {
 				currentDirection = WEST;
 			}
-			// Move only every-other turn
+			// Move only every moveInterval turns
 			if ( age % moveInterval == 0 ) {
 				m = new Move(currentDirection);
 			} else {
