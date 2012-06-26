@@ -214,12 +214,23 @@ public final class LocustAggressive implements Player {
 			currentDirection = STAYPUT;
 			// Start checking in random direction. May make a difference?
 			int d = 1+rand.nextInt(4); // 1 to 4
-			// Head towards an adjacent foreigner
+			// Head towards an adjacent foreigner with food
 			for ( int i = d; i <= d+4; i++ ) {
 				int nesw = (i%4) + 1;
-				if ( isForeigner(neighbors[nesw]) ) {
+				if ( isForeigner(neighbors[nesw]) && foodpresent[nesw] ) {
 					currentDirection = nesw;
 					break;
+				}
+			}
+			// If there's no adjacent foreigner with food, we'll attack anyone else
+			if ( currentDirection == STAYPUT ) {
+				// Head towards an adjacent foreigner
+				for ( int i = d; i <= d+4; i++ ) {
+					int nesw = (i%4) + 1;
+					if ( isForeigner(neighbors[nesw]) ) {
+						currentDirection = nesw;
+						break;
+					}
 				}
 			}
 		}
