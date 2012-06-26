@@ -21,7 +21,7 @@ public final class Famine implements Player {
 	private boolean isEating;
 	private int farmDirection;
 	private int currentDirection;
-	private int moveInterval = 10;
+	private int moveInterval;
 
 
 	/*
@@ -39,8 +39,9 @@ public final class Famine implements Player {
 		this.isEating = false;
 		this.farmDirection = SOUTH;
 		this.foodSeen = new ArrayList<Integer>();
-		this.stepsCounted = 10 * moveInterval;
 		this.currentDirection = SOUTH;
+		this.moveInterval = this.game.v()/this.game.s();
+		this.stepsCounted = 10 * moveInterval;
 	}
 
 	/*
@@ -209,7 +210,7 @@ public final class Famine implements Player {
 	}
 	
 	private boolean isHungry( int energyLeft ) {
-		if ( energyLeft < 200 ) {
+		if ( energyLeft < this.game.M()*.4 ) {
 			return true;
 		}
 		return false;
