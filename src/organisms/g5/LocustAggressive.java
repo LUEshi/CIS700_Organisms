@@ -9,7 +9,7 @@ import organisms.*;
 public final class LocustAggressive implements Player {
 
 	static final String _CNAME = "Locust Aggressive";
-	static final Color _CColor = Color.MAGENTA;
+	static final Color _CColor = new Color(1.0f, 1.0f, 0.0f);
 	private int state;
 	private Random rand;
 	private OrganismsGame game;
@@ -22,7 +22,9 @@ public final class LocustAggressive implements Player {
 	private int currentDirection;
 	private List<Integer> foodSeen;
 	private int stepsCounted = 20;
-	private double reproducePct = 0.7;
+	private double reproducePct = 0.4;
+	private int maturity = 50;
+	private int energyMinimum;
 	private int seckey = 13*13;
 	boolean isGreedy;
 
@@ -48,6 +50,7 @@ public final class LocustAggressive implements Player {
 		this.currentDirection = key%seckey;
 		this.foodSeen = new ArrayList<Integer>();
 		this.isGreedy = false;
+		this.energyMinimum = this.game.v()*5;
 	}
 
 	/*
@@ -121,6 +124,13 @@ public final class LocustAggressive implements Player {
 		return c;
 	}
 	
+	private boolean isNeighbor( int s ) {
+		if ( s != -1 && ( s <= seckey && s >= seckey+4 ) ) {
+			return true;
+		}
+		return false;
+	}
+	
 	public int getNeighborLocustCount( int[] neighbors ) {
 		int neighborCount = 0;
 		for ( int i = 1; i < neighbors.length; i++ ) {
@@ -169,26 +179,32 @@ public final class LocustAggressive implements Player {
 		Move m = null; // placeholder for return value
 
 
+		// if max energy, start reproducing like crazy
+		if ( energyleft >= this.game.M()*reproducePct && getNeighborLocustCount(neighbors) < 5 ) {
+			this.isReproducing = true;
+		}
+
 		
 		if ( this.isReproducing ) {
 			// There has to be a point at which reproducing no longer makes sense.
 			// Some factor of the cost required to take a step
 			// Possibly combined with how much food we saw?
-			if ( energyleft <= this.game.v()*5 ) {
+			if ( energyleft <= this.energyMinimum && this.age < this.maturity || energyleft <= this.energyMinimum*3 ) {
 				this.isReproducing = false;
 			} else {
+				int d = 1+rand.nextInt(4); // 1 to 4
+				for ( int i = d; i <= d+4; i++ ) {
+					int nesw = (i%4) + 1;
+					if ( currentDirection!=nesw ) {
+						this.reproduceDirection = nesw;
+					}
+				}				
 				m = new Move(REPRODUCE, this.reproduceDirection, seckey+this.reproduceDirection);
 				this.reproduceDirection++;
 				if ( this.reproduceDirection > 4 ) {
 					this.reproduceDirection = 1;
 				}
 			}
-		}
-
-
-		// if max energy, start reproducing like crazy
-		if ( energyleft >= this.game.M()*reproducePct && getNeighborLocustCount(neighbors) < 1 ) {
-			this.isReproducing = true;
 		}
 
 		// if we are on food, don't move!
@@ -245,6 +261,12 @@ public final class LocustAggressive implements Player {
 					currentDirection = nesw;
 				}
 			}
+			
+			
+				while (getNeighborLocustCount(neighbors) < 4 && isNeighbor(neighbors[currentDirection]) ) {
+					currentDirection = (currentDirection%4)+1;
+				}
+			
 			
 			int turnInterval = 1;
 			if ( age > this.stepsCounted && foodPerStep() < 0.05 ) {
