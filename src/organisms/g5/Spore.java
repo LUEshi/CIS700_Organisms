@@ -149,22 +149,25 @@ public final class Spore implements Player {
 		if ( m == null ) {
 			// this player selects moves in the same direction as its last move, changing only when food is detected
 
-			// Start checking in random direction. (May make a difference--rather than always looking one direction first)
-			int d = 1+rand.nextInt(4); // 1 to 4
-			// Nope! Better to always look the same direction first! Why?!
-			d=1;
-			for ( int i = d; i <= d+4; i++ ) {
-				int nesw = (i%4) + 1;
-				if ( foodpresent[nesw] && neighbors[nesw]==-1) {
-					currentDirection = nesw;
-				}
-				break;
+			boolean hasSeenFood = false;
+			if ( foodpresent[NORTH] ) {
+				currentDirection = NORTH;
+				hasSeenFood = true;
+			} else if ( foodpresent[EAST] ) {
+				currentDirection = EAST;
+				hasSeenFood = true;
+			} else if ( foodpresent[SOUTH] ) {
+				currentDirection = SOUTH;
+				hasSeenFood = true;
+			} else if ( foodpresent[WEST] ) {
+				currentDirection = WEST;
+				hasSeenFood = true;
 			}
 
 			
 			
 			// Move only every moveInterval turns
-			if ( age % moveInterval == 0 ) {
+			if ( hasSeenFood || age % moveInterval == 0 ) {
 				m = new Move(currentDirection);
 			} else {
 				m = new Move(STAYPUT);
