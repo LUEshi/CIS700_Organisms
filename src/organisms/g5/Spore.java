@@ -14,6 +14,7 @@ public final class Spore implements Player {
 	private Random rand;
 	private OrganismsGame game;
 	private int age;
+	private int moves;
 	private List<Integer> foodSeen;
 	private int stepsCounted;
 	private boolean germinated = false;
@@ -36,6 +37,7 @@ public final class Spore implements Player {
 		}
 		this.game = game;
 		this.age = 0;
+		this.moves = 0;
 		this.foodSeen = new ArrayList<Integer>();
 		this.currentDirection = SOUTH;
 		this.currentDirection = rand.nextInt(4)+1;
@@ -44,6 +46,10 @@ public final class Spore implements Player {
 		this.stepsCounted = 10 * moveInterval;
 		// Make the organism wait when it is first reproduced, based on its maximum (starting?) energy and the ratio of the cost of moving and staying still 
 		this.waitTime = (int) ( (this.game.M()-100) * ( (double) this.game.v()/ (double) this.game.u() )); // If moving requires as much energy as is gained from eating, wait a long time!
+		// at least try to take 5 steps though
+		if ( this.waitTime > this.game.M() - this.game.v()*5) {
+			this.waitTime = Math.max(this.game.M() - this.game.v()*5, 0);
+		}
 	}
 
 	/*
@@ -118,9 +124,12 @@ public final class Spore implements Player {
 		//this.game.println(" "+ foodPerStep());
 		Move m = null; // placeholder for return value
 		
-		if ( foodleft >= this.game.K() ) {
+
+		//(foodleft*this.game.u() < this.game.v()*10 && foodleft > 0)
+		//(foodleft<this.game.K()/2 && foodleft > 0)
+		if ( foodleft >= this.game.K() || (this.game.u()<=this.game.v() && foodleft >= this.game.K()-1)  ) {
 			this.germinated = true;
-		} else if ( age < waitTime ) {
+		} else if ( age < waitTime || (foodleft > 0 && this.game.M() > energyleft + this.game.u()) ) {
 			m = new Move(STAYPUT);
 		}
 
@@ -139,6 +148,7 @@ public final class Spore implements Player {
 					}
 					break;
 				}
+
 				m = new Move(REPRODUCE, direction, 1);					
 
 
@@ -180,6 +190,7 @@ public final class Spore implements Player {
 			// Move only every moveInterval turns
 			if ( hasSeenFood || age % moveInterval == 0 ) {
 				m = new Move(currentDirection);
+				this.moves++;
 			} else {
 				m = new Move(STAYPUT);
 			}
