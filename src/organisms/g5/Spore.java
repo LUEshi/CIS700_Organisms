@@ -130,7 +130,7 @@ public final class Spore implements Player {
 				// generate spores
 				// Start checking in random direction. (May make a difference--rather than always looking one direction first)
 				int d = 1+rand.nextInt(4); // 1 to 4
-				int direction = 0;
+				int direction = 0;				
 				for ( int i = d; i <= d+4; i++ ) {
 					//System.out.println("check dir");
 					int nesw = (i%4) + 1;
@@ -139,7 +139,18 @@ public final class Spore implements Player {
 					}
 					break;
 				}
-				m = new Move(REPRODUCE, direction, 1);
+				m = new Move(REPRODUCE, direction, 1);					
+
+
+				/*
+				direction = 1+rand.nextInt(3);
+				if (neighbors[direction]==-1) {
+					m = new Move(REPRODUCE, direction, 1);					
+				} else {
+					m = new Move(STAYPUT);
+				}
+				*/
+				
 			} else {
 				m = new Move(STAYPUT);
 			}
