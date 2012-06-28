@@ -30,16 +30,20 @@ public final class Spore implements Player {
 	public void register(OrganismsGame game, int key) throws Exception
 	{
 		rand = new Random();
-		state = rand.nextInt(256);
+		state = key;
+		if ( state == -1 ) {
+			state = 0;
+		}
 		this.game = game;
 		this.age = 0;
 		this.foodSeen = new ArrayList<Integer>();
 		this.currentDirection = SOUTH;
+		this.currentDirection = rand.nextInt(4)+1;
 		// TODO does this make sense when the probability of food is low?
-		this.moveInterval = this.game.v()/this.game.s(); // Since stayput always costs 1, the move interval is always the cost of moving?
+		this.moveInterval = this.game.v()/this.game.s(); // Since stayput always costs 1, the move interval is always the cost of moving
 		this.stepsCounted = 10 * moveInterval;
-		// TODO why 400 again?
-		this.waitTime = 400 * ( this.game.v()/ this.game.u() ); // If moving requires as much energy as is gained from eating, wait a long time!
+		// Make the organism wait when it is first reproduced, based on its maximum (starting?) energy and the ratio of the cost of moving and staying still 
+		this.waitTime = (int) ( (this.game.M()-100) * ( (double) this.game.v()/ (double) this.game.u() )); // If moving requires as much energy as is gained from eating, wait a long time!
 	}
 
 	/*
@@ -114,31 +118,28 @@ public final class Spore implements Player {
 		//this.game.println(" "+ foodPerStep());
 		Move m = null; // placeholder for return value
 		
-		// TODO why 80% Arbitrary, but suggests food may be plentiful nearby
-		if ( foodleft > this.game.K()*.8 ) {
+		if ( foodleft >= this.game.K() ) {
 			this.germinated = true;
 		} else if ( age < waitTime ) {
 			m = new Move(STAYPUT);
-			return m;			
 		}
 
 		
 		if ( this.germinated ) {
-			// TODO why 80%? Arbitrary, but suggest the organism is strong
-			if ( this.childCount < 4 && numNeighbors(neighbors) < 4 && this.germinated && energyleft > this.game.M()*.8 ) {
+			if ( this.childCount < 4 && numNeighbors(neighbors) < 4 && energyleft >= this.game.M() ) {
 				// generate spores
 				// Start checking in random direction. (May make a difference--rather than always looking one direction first)
 				int d = 1+rand.nextInt(4); // 1 to 4
 				int direction = 0;
 				for ( int i = d; i <= d+4; i++ ) {
-					System.out.println("check dir");
+					//System.out.println("check dir");
 					int nesw = (i%4) + 1;
 					if ( neighbors[nesw]==-1 ) {
 						direction = nesw;
 					}
 					break;
 				}
-				m = new Move(REPRODUCE, direction, state);
+				m = new Move(REPRODUCE, direction, 1);
 			} else {
 				m = new Move(STAYPUT);
 			}
@@ -146,16 +147,22 @@ public final class Spore implements Player {
 		
 
 		if ( m == null ) {
-			// this player selects moves in the same direction, changing only when food is detected
-			if ( foodpresent[NORTH] ) {
-				currentDirection = NORTH;
-			} else if ( foodpresent[EAST] ) {
-				currentDirection = EAST;
-			} else if ( foodpresent[SOUTH] ) {
-				currentDirection = SOUTH;
-			} else if ( foodpresent[WEST] ) {
-				currentDirection = WEST;
+			// this player selects moves in the same direction as its last move, changing only when food is detected
+
+			// Start checking in random direction. (May make a difference--rather than always looking one direction first)
+			int d = 1+rand.nextInt(4); // 1 to 4
+			// Nope! Better to always look the same direction first! Why?!
+			d=1;
+			for ( int i = d; i <= d+4; i++ ) {
+				int nesw = (i%4) + 1;
+				if ( foodpresent[nesw] && neighbors[nesw]==-1) {
+					currentDirection = nesw;
+				}
+				break;
 			}
+
+			
+			
 			// Move only every moveInterval turns
 			if ( age % moveInterval == 0 ) {
 				m = new Move(currentDirection);
